@@ -3,9 +3,10 @@ import numpy as np
 class Conv:
     def conv(input_vector, kernel_shape, stride, padding,
             non_linear_func):
+        filter_kernel = np.random.random_sample(kernel_shape)
         if len(input_vector.shape) == 2:
             input_vector = np.expand_dims(input_vector, axis=2)
-        filter_kernel = np.random.random_sample(input_vector.shape)
+            filter_kernel = np.expand_dims(filter_kernel, axis=2)
         inp_vec_with_padding = np.pad(input_vector, ((padding, padding),
             (padding, padding), (0,0)), 'constant', constant_values=0)
         #print(inp_vec_with_padding.shape)
@@ -37,22 +38,3 @@ class Conv:
                         input_vector[i : i + filter_size[0], j : j + filter_size[1]])
 
         return output_vector
-
-class Layers:
-    def __init__(self):
-        self.convc = Conv()
-    def conv_layer(input_vector_volume, kernel_shape, stride, padding,
-            non_linear_func):
-        output_array = []
-        for i in range(input_vector_volume.shape[0]):
-            output_array.append(self.convc.conv(input_vector_volume[i],
-                kernel_shape[0], stride, padding, non_linear_func))
-
-        return np.array(output_array)
-
-    def pool_layer(input_vector_volume, filter_size, stride, pooling_function):
-        output_array = []
-        for i in range(input_vector_volume.shape[0])):
-            output_array.append(self.convc.pool(input_vector_volume[i],
-                filter_size[0], stride, pooling_function)
-        return np.array(output_array)
