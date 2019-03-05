@@ -2,6 +2,7 @@ import numpy as np
 from tensorflow.examples.tutorials.mnist import input_data
 from convnet import CNN
 import utils
+import matplotlib.pyplot as plt
 
 
 class MNIST:
@@ -19,9 +20,6 @@ class MNIST:
         self.y_train = mnist.train.labels
         self.X_test = np.array([img.reshape((28, 28)) for img in mnist.test.images])
         self.y_test = mnist.test.labels
-        self.X_train = self.X_train[:10]
-        self.X_test = self.X_train
-        self.y_test = self.y_train
         del mnist
 
     def init_model(self):
@@ -44,7 +42,7 @@ class MNIST:
 
         # Opt params
         self.learning_rate = 0.1
-        self.epochs = 100
+        self.epochs = 15
 
         self.model = CNN(self.num_channels, self.num_conv_layers, self.kernel_shape_list, self.num_kernels_list,
                           self.stride_list, self.padding_list, self.non_linearity_list, self.pooling_kernel_shape_list,
@@ -52,14 +50,16 @@ class MNIST:
                           self.learning_rate)
 
     def train(self, batch_size=1): #Default is stochastic gradient descent
+        self.training_loss_array = []
+        self.test_loss_array = []
         for n_epoch in range(self.epochs):
             for i in range(0, self.X_train.shape[0], batch_size):
                 dloss = np.zeros((10,))
                 batch_loss = 0.0
                 for b in range(batch_size):
-                    out = self.model.forward(self.X_train[0])
+                    out = self.model.forward(self.X_train[i + b])
                     # print(out)
-                    tar = self.y_train[0]
+                    tar = self.y_train[i + b]
                     dloss += out - tar
                     batch_loss += utils.cross_entropy_loss(out, tar)
                 dloss /= batch_size
@@ -69,12 +69,12 @@ class MNIST:
             # Find avg. training loss
             training_loss = 0.0
             for i in range(self.X_train.shape[0]):
-                out = self.model.forward(self.X_train[i])
+                out = self.model.forward(self.X_train[i], sample=True)
                 tar = self.y_train[i]
                 training_loss += utils.cross_entropy_loss(out, tar)
             training_loss /= self.X_train.shape[0]
             print("Training loss after epoch", n_epoch, "is :", training_loss)
-
+            self.training_loss_array.append(training_loss)
             # Find avg. test loss
             test_loss = 0.0
             accuracy = 0.0
@@ -89,12 +89,37 @@ class MNIST:
             print("Test loss after epoch", n_epoch, "is :", test_loss)
             print("Accuracy after epoch", n_epoch, "is :", accuracy)
 
-            #Shuffle training data after every epoch
-            #p = np.random.permutation(self.X_train.shape[0])
-            #self.X_train = self.X_train[p]
-            #self.y_train = self.y_train[p]
+            plt.show()
+            self.test_loss_array.append(test_loss)
+            # Shuffle training data after every epoch
+            p = np.random.permutation(self.X_train.shape[0])
+            self.X_train = self.X_train[p]
+            self.y_train = self.y_train[p]
+
+    def visualize(self):
+        # plt.xlabel('epoch')
+        # plt.ylabel('loss')
+        # plt.plot(range(self.epochs), self.training_loss_array, label='training loss')
+        # plt.plot(range(self.epochs), self.test_loss_array, label='test loss')
+        # plt.legend(loc='upper right')
+        # plt.show()
+        # plt.clf()
+        self.model.activation_map_samples = np.array(self.model.activation_map_samples)
+        fig, axs = plt.subplots(self.epochs, 4)
+
+        for i in range(self.epochs):
+            axs[i][0].imshow(utils.normalized_to_grayscale(self.model.activation_map_samples[i][0]))
+            axs[i][0].set(xlabel='Conv1, epoch:' + str(i + 1))
+            axs[i][1].imshow(utils.normalized_to_grayscale(self.model.activation_map_samples[i][1]))
+            axs[i][1].set(xlabel='Pool1, epoch:' + str(i + 1))
+            axs[i][2].imshow(utils.normalized_to_grayscale(self.model.activation_map_samples[i][2]))
+            axs[i][2].set(xlabel='Conv2, epoch:' + str(i + 1))
+            axs[i][3].imshow(utils.normalized_to_grayscale(self.model.activation_map_samples[i][3]))
+            axs[i][3].set(xlabel='Pool2, epoch:' + str(i + 1))
+        plt.show()
 
 if __name__ == '__main__':
     mn = MNIST()
     mn.get_mnist_data()
-    mn.train(batch_size=1)
+    mn.train(batch_size=10)
+    mn.visualize()

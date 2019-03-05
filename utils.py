@@ -1,7 +1,6 @@
 from PIL import Image
 import numpy as np
 
-
 def read_image(path):
     img = Image.open(path)
     return np.array(img)
@@ -29,3 +28,9 @@ def softmax(x):
 def cross_entropy_loss(out_vector, target, eps=1e-12):
     out_vector = np.clip(out_vector, eps, 1 - eps)
     return -np.sum(target * np.log(out_vector + 1e-9))  # Assume cross entropy loss and softmax on output
+
+def normalized_to_grayscale(X):
+    mn = np.amin(X)
+    mx = np.amax(X)
+    X = (X - mn) / (mx - mn)
+    return X

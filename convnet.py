@@ -9,6 +9,7 @@ class CNN:
                  learning_rate=0.1):
         self.learning_rate = learning_rate
         self.layers = []
+        self.activation_map_samples = []
         for l in range(num_conv_layers):
             if l == 0:
                 self.layers.append(ConvLayer(kernel_shape_list[l], num_kernels_list[l], stride_list[l], padding_list[l],
@@ -20,10 +21,14 @@ class CNN:
 
         self.layers.append(DenseLayer(dense_input_num_nodes, final_output_size, utils.relu, final_softmax))
 
-    def forward(self, input_image_volume):
+    def forward(self, input_image_volume, sample=False):
         out_vector = input_image_volume
-        for layer in self.layers:
+        if sample:
+            self.activation_map_samples.append([])
+        for ind, layer in enumerate(self.layers):
             out_vector = layer.forward(out_vector)
+            if sample and ind < len(self.layers) - 1:
+                self.activation_map_samples[-1].append(out_vector[0])
         return out_vector
 
 
